@@ -2,6 +2,7 @@ const ShiftModal = require('./../../../db').shift
 const UserModel = require('./../../../db').users
 const HolidayModal = require('./../../../db').holidays
 const DayOffModal = require('./../../../db').day_off
+const SurchargeModal = require('./../../../db').surcharge
 const Sequelize = require('sequelize')
 const HttpError = require('http-errors')
 const map_shift = require('./../helper/shift.helper')
@@ -911,6 +912,420 @@ const guardShiftDataMonth = async (req, res, next) => {
   }
 }
 
+const adminSalaryYear = async (req, res, next) => {
+  try {
+    const { date } = req.query
+    const condition = {
+      [Op.and]: [
+        {
+          shift_date: {
+            [Op.between]: [
+              dayjs(date).startOf('year').format('YYYY-MM-DD'),
+              dayjs(date).endOf('year').format('YYYY-MM-DD'),
+            ],
+          },
+        },
+        {
+          on_leave: false,
+        },
+      ],
+    }
+    const { surcharge_hour } = await SurchargeModal.findOne({
+      where: { year: dayjs(date).format('YYYY') },
+    })
+    const shifts = await ShiftModal.findAll({
+      where: condition,
+      order: [['shift_date', 'DESC']],
+      include: [
+        {
+          model: UserModel,
+          attributes: ['id', 'first_name', 'last_name'],
+        },
+      ],
+    })
+    const guard = await UserModel.findAll({
+      where: { role: 'GUARD' },
+    })
+
+    const guard_salary = guard.map((item) => {
+      let total = 0
+      let shift_one = 0
+      let shift_one_holiday = 0
+      let shift_one_sunday = 0
+      let shift_two = 0
+      let shift_two_holiday = 0
+      let shift_two_sunday = 0
+      let shift_three = 0
+      let shift_three_holiday = 0
+      let shift_three_sunday = 0
+      let holiday = 0
+      let sunday = 0
+      let shift_one_normal = 0
+      let shift_two_normal = 0
+      let shift_three_normal = 0
+      shifts.forEach((element) => {
+        if (element.user_id === item.id) {
+          total = total + 1
+          if (element.is_holiday === true) {
+            holiday = holiday + 1
+          }
+          if (element.user_id === item.id && element.shift_number === 1) {
+            shift_one = shift_one + 1
+            if (element.is_holiday) {
+              shift_one_holiday = shift_one_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_one_sunday = shift_one_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_one_normal = shift_one_normal + 1
+            }
+          }
+          if (element.user_id === item.id && element.shift_number === 2) {
+            shift_two = shift_two + 1
+            if (element.is_holiday) {
+              shift_two_holiday = shift_two_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_two_sunday = shift_two_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_two_normal = shift_two_normal + 1
+            }
+          }
+          if (element.user_id === item.id && element.shift_number === 3) {
+            shift_three = shift_three + 1
+            if (element.is_holiday) {
+              shift_three_holiday = shift_three_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_three_sunday = shift_three_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_three_normal = shift_three_normal + 1
+            }
+          }
+          if (
+            element.user_id === item.id &&
+            dayjs(element.shift_date).format('ddd') === 'Sun'
+          ) {
+            sunday = sunday + 1
+          }
+        }
+      })
+
+      return {
+        ...item,
+        holiday: holiday,
+        total: total,
+        sunday,
+        shift_three,
+        shift_two,
+        shift_one,
+        surcharge_hour,
+        shift_one_holiday,
+        shift_one_sunday,
+
+        shift_two_holiday,
+        shift_two_sunday,
+
+        shift_three_holiday,
+        shift_three_sunday,
+        shift_one_normal,
+        shift_two_normal,
+        shift_three_normal,
+      }
+    })
+    res.status(200).json(guard_salary)
+  } catch (error) {
+    console.log(error)
+    return next(new HttpError.InternalServerError('Internal Server Error'))
+  }
+}
+
+const adminSalaryMonth = async (req, res, next) => {
+  try {
+    const { date } = req.query
+    const condition = {
+      [Op.and]: [
+        {
+          shift_date: {
+            [Op.between]: [
+              dayjs(date).startOf('month').format('YYYY-MM-DD'),
+              dayjs(date).endOf('month').format('YYYY-MM-DD'),
+            ],
+          },
+        },
+        {
+          on_leave: false,
+        },
+      ],
+    }
+
+    const shifts = await ShiftModal.findAll({
+      where: condition,
+      order: [['shift_date', 'DESC']],
+      include: [
+        {
+          model: UserModel,
+          attributes: ['id', 'first_name', 'last_name'],
+        },
+      ],
+    })
+    const guard = await UserModel.findAll({
+      where: { role: 'GUARD' },
+    })
+
+    const guard_salary = guard.map((item) => {
+      let total = 0
+      let shift_one = 0
+      let shift_one_holiday = 0
+      let shift_one_sunday = 0
+      let shift_two = 0
+      let shift_two_holiday = 0
+      let shift_two_sunday = 0
+      let shift_three = 0
+      let shift_three_holiday = 0
+      let shift_three_sunday = 0
+      let holiday = 0
+      let sunday = 0
+      let shift_one_normal = 0
+      let shift_two_normal = 0
+      let shift_three_normal = 0
+      shifts.forEach((element) => {
+        if (element.user_id === item.id) {
+          total = total + 1
+          if (element.is_holiday === true) {
+            holiday = holiday + 1
+          }
+          if (element.user_id === item.id && element.shift_number === 1) {
+            shift_one = shift_one + 1
+            if (element.is_holiday) {
+              shift_one_holiday = shift_one_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_one_sunday = shift_one_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_one_normal = shift_one_normal + 1
+            }
+          }
+          if (element.user_id === item.id && element.shift_number === 2) {
+            shift_two = shift_two + 1
+            if (element.is_holiday) {
+              shift_two_holiday = shift_two_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_two_sunday = shift_two_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_two_normal = shift_two_normal + 1
+            }
+          }
+          if (element.user_id === item.id && element.shift_number === 3) {
+            shift_three = shift_three + 1
+            if (element.is_holiday) {
+              shift_three_holiday = shift_three_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_three_sunday = shift_three_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_three_normal = shift_three_normal + 1
+            }
+          }
+          if (
+            element.user_id === item.id &&
+            dayjs(element.shift_date).format('ddd') === 'Sun'
+          ) {
+            sunday = sunday + 1
+          }
+        }
+      })
+
+      return {
+        ...item,
+        holiday: holiday,
+        total: total,
+        sunday,
+        shift_three,
+        shift_two,
+        shift_one,
+        shift_one_holiday,
+        shift_one_sunday,
+
+        shift_two_holiday,
+        shift_two_sunday,
+
+        shift_three_holiday,
+        shift_three_sunday,
+        shift_one_normal,
+        shift_two_normal,
+        shift_three_normal,
+      }
+    })
+    res.status(200).json(guard_salary)
+  } catch (error) {
+    console.log(error)
+    return next(new HttpError.InternalServerError('Internal Server Error'))
+  }
+}
+
+const adminSalaryWeek = async (req, res, next) => {
+  try {
+    const { date } = req.query
+    const condition = {
+      [Op.and]: [
+        {
+          shift_date: {
+            [Op.between]: [
+              dayjs(date).startOf('week').format('YYYY-MM-DD'),
+              dayjs(date).endOf('week').format('YYYY-MM-DD'),
+            ],
+          },
+        },
+        {
+          on_leave: false,
+        },
+      ],
+    }
+
+    const shifts = await ShiftModal.findAll({
+      where: condition,
+      order: [['shift_date', 'DESC']],
+      include: [
+        {
+          model: UserModel,
+          attributes: ['id', 'first_name', 'last_name'],
+        },
+      ],
+    })
+    const guard = await UserModel.findAll({
+      where: { role: 'GUARD' },
+    })
+
+    const guard_salary = guard.map((item) => {
+      let total = 0
+      let shift_one = 0
+      let shift_one_holiday = 0
+      let shift_one_sunday = 0
+      let shift_two = 0
+      let shift_two_holiday = 0
+      let shift_two_sunday = 0
+      let shift_three = 0
+      let shift_three_holiday = 0
+      let shift_three_sunday = 0
+      let holiday = 0
+      let sunday = 0
+      let shift_one_normal = 0
+      let shift_two_normal = 0
+      let shift_three_normal = 0
+      shifts.forEach((element) => {
+        if (element.user_id === item.id) {
+          total = total + 1
+          if (element.is_holiday === true) {
+            holiday = holiday + 1
+          }
+          if (element.user_id === item.id && element.shift_number === 1) {
+            shift_one = shift_one + 1
+            if (element.is_holiday) {
+              shift_one_holiday = shift_one_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_one_sunday = shift_one_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_one_normal = shift_one_normal + 1
+            }
+          }
+          if (element.user_id === item.id && element.shift_number === 2) {
+            shift_two = shift_two + 1
+            if (element.is_holiday) {
+              shift_two_holiday = shift_two_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_two_sunday = shift_two_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_two_normal = shift_two_normal + 1
+            }
+          }
+          if (element.user_id === item.id && element.shift_number === 3) {
+            shift_three = shift_three + 1
+            if (element.is_holiday) {
+              shift_three_holiday = shift_three_holiday + 1
+            }
+            if (dayjs(element.shift_date).format('ddd') === 'Sun') {
+              shift_three_sunday = shift_three_sunday + 1
+            }
+            if (
+              !element.is_holiday &&
+              dayjs(element.shift_date).format('ddd') === 'Sun'
+            ) {
+              shift_three_normal = shift_three_normal + 1
+            }
+          }
+          if (
+            element.user_id === item.id &&
+            dayjs(element.shift_date).format('ddd') === 'Sun'
+          ) {
+            sunday = sunday + 1
+          }
+        }
+      })
+
+      return {
+        ...item,
+        holiday: holiday,
+        total: total,
+        sunday,
+        shift_three,
+        shift_two,
+        shift_one,
+        shift_one_holiday,
+        shift_one_sunday,
+
+        shift_two_holiday,
+        shift_two_sunday,
+
+        shift_three_holiday,
+        shift_three_sunday,
+        shift_one_normal,
+        shift_two_normal,
+        shift_three_normal,
+      }
+    })
+    res.status(200).json(guard_salary)
+  } catch (error) {
+    console.log(error)
+    return next(new HttpError.InternalServerError('Internal Server Error'))
+  }
+}
+
 module.exports = {
   addShift,
   updateShift,
@@ -924,4 +1339,7 @@ module.exports = {
   adminShiftDataYear,
   adminShiftDataMonth,
   guardShiftDataMonth,
+  adminSalaryYear,
+  adminSalaryMonth,
+  adminSalaryWeek,
 }

@@ -33,6 +33,15 @@ router
   .route('/dash-shift-month')
   .get(token_auth, ADMIN_SUPER, ShiftCTRL.adminShiftDataMonth)
 router
+  .route('/salary-year')
+  .get(token_auth, ADMIN_SUPER, ShiftCTRL.adminSalaryYear)
+router
+  .route('/salary-month')
+  .get(token_auth, ADMIN_SUPER, ShiftCTRL.adminSalaryMonth)
+router
+  .route('/salary-week')
+  .get(token_auth, ADMIN_SUPER, ShiftCTRL.adminSalaryWeek)
+router
   .route('/:id')
   .put(token_auth, supervisor, ShiftCTRL.updateShift)
   .delete(token_auth, supervisor, ShiftCTRL.removeShift)

@@ -31,6 +31,10 @@ db.day_off = require('./modules/day_off/models/day_off.model')(
   sequelize,
   Sequelize,
 )
+db.surcharge = require('./modules/surcharge/surcharge.model')(
+  sequelize,
+  Sequelize,
+)
 db.shift.belongsTo(db.users)
 db.users.hasMany(db.shift)
 db.shift.belongsTo(db.holidays)
